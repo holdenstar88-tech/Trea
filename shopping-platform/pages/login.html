@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录/注册 - 优购商城</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/auth.css">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <!-- 左侧品牌区 -->
+        <div class="auth-brand">
+            <div class="brand-logo">🛍️</div>
+            <h1 class="brand-title">优购商城</h1>
+            <p class="brand-subtitle">发现品质生活，享受购物乐趣</p>
+            <div class="brand-features">
+                <div class="feature-item">
+                    <div class="feature-icon">✓</div>
+                    <span>正品保证，品质无忧</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🚚</div>
+                    <span>快速配送，准时到达</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔄</div>
+                    <span>7天无理由退换</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧表单区 -->
+        <div class="auth-form-section">
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchAuthTab('login')">登录</button>
+                <button class="auth-tab" onclick="switchAuthTab('register')">注册</button>
+            </div>
+
+            <!-- 登录表单 -->
+            <form class="auth-form active" id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">用户名</label>
+                    <input type="text" class="form-input" id="loginUsername" placeholder="请输入用户名" required>
+                    <div class="error-message" id="loginUsernameError">用户名不能为空</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">密码</label>
+                    <input type="password" class="form-input" id="loginPassword" placeholder="请输入密码" required>
+                    <div class="error-message" id="loginPasswordError">密码不能为空</div>
+                </div>
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" id="rememberMe">
+                        <span>记住我</span>
+                    </label>
+                    <a href="#" class="forgot-password">忘记密码？</a>
+                </div>
+                <button type="submit" class="btn-submit">登 录</button>
+            </form>
+
+            <!-- 注册表单 -->
+            <form class="auth-form" id="registerForm" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label class="form-label">用户名</label>
+                    <input type="text" class="form-input" id="regUsername" placeholder="请输入用户名（3-20位字母数字）" required>
+                    <div class="error-message" id="regUsernameError">用户名格式不正确</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">邮箱</label>
+                    <input type="email" class="form-input" id="regEmail" placeholder="请输入邮箱地址" required>
+                    <div class="error-message" id="regEmailError">邮箱格式不正确</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">密码</label>
+                    <input type="password" class="form-input" id="regPassword" placeholder="请输入密码（6-20位）" required>
+                    <div class="error-message" id="regPasswordError">密码长度不能少于6位</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">确认密码</label>
+                    <input type="password" class="form-input" id="regConfirmPassword" placeholder="请再次输入密码" required>
+                    <div class="error-message" id="regConfirmPasswordError">两次输入的密码不一致</div>
+                </div>
+                <button type="submit" class="btn-submit">注 册</button>
+            </form>
+
+            <!-- 社交登录 -->
+            <div class="social-login">
+                <div class="social-divider">
+                    <span>其他方式登录</span>
+                </div>
+                <div class="social-buttons">
+                    <button class="social-btn" title="微信登录">💬</button>
+                    <button class="social-btn" title="QQ登录">🐧</button>
+                    <button class="social-btn" title="微博登录">📱</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 消息提示 -->
+    <div class="toast" id="toast"></div>
+
+    <script src="../js/data.js"></script>
+    <script>
+        // 切换登录/注册标签
+        function switchAuthTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tab + 'Form').classList.add('active');
+        }
+
+        // 显示错误信息
+        function showError(fieldId, show) {
+            const field = document.getElementById(fieldId);
+            const error = document.getElementById(fieldId + 'Error');
+            
+            if (show) {
+                field.classList.add('error');
+                error.classList.add('show');
+            } else {
+                field.classList.remove('error');
+                error.classList.remove('show');
+            }
+        }
+
+        // 清除所有错误
+        function clearErrors() {
+            document.querySelectorAll('.form-input').forEach(input => input.classList.remove('error'));
+            document.querySelectorAll('.error-message').forEach(error => error.classList.remove('show'));
+        }
+
+        // 显示消息提示
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // 处理登录
+        function handleLogin(event) {
+            event.preventDefault();
+            clearErrors();
+            
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            // 验证
+            let hasError = false;
+            
+            if (!username) {
+                showError('loginUsername', true);
+                hasError = true;
+            }
+            
+            if (!password) {
+                showError('loginPassword', true);
+                hasError = true;
+            }
+            
+            if (hasError) return;
+            
+            // 模拟登录验证
+            if (login(username, password)) {
+                showToast('登录成功！', 'success');
+                setTimeout(() => {
+                    // 检查是否有跳转目标
+                    const redirect = localStorage.getItem('redirectAfterLogin');
+                    if (redirect) {
+                        localStorage.removeItem('redirectAfterLogin');
+                        window.location.href = redirect;
+                    } else {
+                        window.location.href = '../index.html';
+                    }
+                }, 1500);
+            } else {
+                // 检查是否是已注册用户
+                const users = JSON.parse(localStorage.getItem('users')) || [];
+                const user = users.find(u => u.username === username);
+                
+                if (!user) {
+                    showToast('用户名不存在，请先注册', 'error');
+                    setTimeout(() => {
+                        switchAuthTab('register');
+                        document.getElementById('regUsername').value = username;
+                    }, 1500);
+                } else {
+                    showToast('密码错误，请重试', 'error');
+                }
+            }
+        }
+
+        // 处理注册
+        function handleRegister(event) {
+            event.preventDefault();
+            clearErrors();
+            
+            const username = document.getElementById('regUsername').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+            
+            // 验证
+            let hasError = false;
+            
+            if (!username || username.length < 3 || username.length > 20) {
+                showError('regUsername', true);
+                hasError = true;
+            }
+            
+            if (!email || !email.includes('@')) {
+                showError('regEmail', true);
+                hasError = true;
+            }
+            
+            if (!password || password.length < 6) {
+                showError('regPassword', true);
+                hasError = true;
+            }
+            
+            if (password !== confirmPassword) {
+                showError('regConfirmPassword', true);
+                hasError = true;
+            }
+            
+            if (hasError) return;
+            
+            // 执行注册
+            const result = register(username, email, password);
+            
+            if (result.success) {
+                showToast('注册成功！请登录', 'success');
+                setTimeout(() => {
+                    switchAuthTab('login');
+                    document.getElementById('loginUsername').value = username;
+                }, 1500);
+            } else {
+                showToast(result.message, 'error');
+                showError('regUsername', true);
+            }
+        }
+
+        // 检查是否已登录
+        document.addEventListener('DOMContentLoaded', function() {
+            if (checkLogin()) {
+                showToast('您已登录，正在跳转...', 'success');
+                setTimeout(() => {
+                    window.location.href = '../index.html';
+                }, 1500);
+            }
+            
+            // 检查URL参数
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('action') === 'register') {
+                document.querySelector('.auth-tab:nth-child(2)').click();
+            }
+        });
+    </script>
+</body>
+</html>

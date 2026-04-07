@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>优购商城 - 您的品质生活之选</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/product.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <span class="logo-icon">🛍️</span>
+                <span>优购商城</span>
+            </a>
+            
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索商品...">
+                <button onclick="searchProducts()">🔍</button>
+            </div>
+            
+            <div class="nav-links">
+                <a href="index.html">🏠 首页</a>
+                <a href="pages/cart.html" class="cart-icon">
+                    🛒 购物车
+                    <span class="cart-count">0</span>
+                </a>
+                <a href="pages/login.html" id="userLink">👤 登录</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="main-container">
+        <!-- 轮播图 -->
+        <section class="hero-section">
+            <div class="carousel">
+                <div class="carousel-item active">
+                    <div class="carousel-content">
+                        <h2>🎉 春季大促</h2>
+                        <p>全场商品低至5折起，限时抢购中！</p>
+                        <a href="#products" class="btn-primary">立即选购</a>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="carousel-content" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <h2>📱 新品上市</h2>
+                        <p>iPhone 15 Pro 系列，钛金属设计</p>
+                        <a href="#products" class="btn-primary">查看详情</a>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="carousel-content" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <h2>🚚 免费配送</h2>
+                        <p>订单满99元即享全国包邮</p>
+                        <a href="#products" class="btn-primary">去购物</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 分类导航 -->
+        <section class="category-section">
+            <div class="category-list" id="categoryList">
+                <!-- 分类将通过JS动态生成 -->
+            </div>
+        </section>
+
+        <!-- 商品列表 -->
+        <section class="products-section" id="products">
+            <div class="section-header">
+                <h2 class="section-title">🔥 热门商品</h2>
+                <div class="sort-options">
+                    <button class="sort-btn active" onclick="sortProducts('default')">综合</button>
+                    <button class="sort-btn" onclick="sortProducts('price-asc')">价格 ↑</button>
+                    <button class="sort-btn" onclick="sortProducts('price-desc')">价格 ↓</button>
+                    <button class="sort-btn" onclick="sortProducts('sales')">销量</button>
+                </div>
+            </div>
+            
+            <div class="products-grid" id="productsGrid">
+                <!-- 商品卡片将通过JS动态生成 -->
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>关于我们</h3>
+                <ul>
+                    <li><a href="#">公司简介</a></li>
+                    <li><a href="#">联系我们</a></li>
+                    <li><a href="#">加入我们</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>客户服务</h3>
+                <ul>
+                    <li><a href="#">帮助中心</a></li>
+                    <li><a href="#">售后服务</a></li>
+                    <li><a href="#">配送说明</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>商务合作</h3>
+                <ul>
+                    <li><a href="#">商家入驻</a></li>
+                    <li><a href="#">广告服务</a></li>
+                    <li><a href="#">合作伙伴</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>关注我们</h3>
+                <ul>
+                    <li><a href="#">微信公众号</a></li>
+                    <li><a href="#">新浪微博</a></li>
+                    <li><a href="#">抖音号</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 优购商城. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- 消息提示 -->
+    <div class="toast" id="toast"></div>
+
+    <script src="js/data.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

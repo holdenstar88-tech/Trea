@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品详情 - 优购商城</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/product.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../index.html" class="logo">
+                <span class="logo-icon">🛍️</span>
+                <span>优购商城</span>
+            </a>
+            
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索商品...">
+                <button onclick="searchFromDetail()">🔍</button>
+            </div>
+            
+            <div class="nav-links">
+                <a href="../index.html">🏠 首页</a>
+                <a href="cart.html" class="cart-icon">
+                    🛒 购物车
+                    <span class="cart-count">0</span>
+                </a>
+                <a href="login.html" id="userLink">👤 登录</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 商品详情 -->
+    <div class="product-detail-container">
+        <div class="product-detail" id="productDetail">
+            <!-- 商品详情将通过JS动态生成 -->
+        </div>
+
+        <!-- 商品标签页 -->
+        <div class="product-tabs">
+            <div class="tab-header">
+                <button class="tab-btn active" onclick="switchTab('details')">商品详情</button>
+                <button class="tab-btn" onclick="switchTab('specs')">规格参数</button>
+                <button class="tab-btn" onclick="switchTab('reviews')">用户评价</button>
+            </div>
+            <div class="tab-content">
+                <div class="tab-panel active" id="tab-details">
+                    <div id="productDescription">
+                        <!-- 商品描述 -->
+                    </div>
+                </div>
+                <div class="tab-panel" id="tab-specs">
+                    <table class="specs-table" id="specsTable">
+                        <!-- 规格参数 -->
+                    </table>
+                </div>
+                <div class="tab-panel" id="tab-reviews">
+                    <div class="reviews-list" id="reviewsList">
+                        <!-- 评价列表 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 相关商品 -->
+        <div class="related-products">
+            <h3 class="related-title">🎯 相关推荐</h3>
+            <div class="products-grid" id="relatedProducts">
+                <!-- 相关商品 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>关于我们</h3>
+                <ul>
+                    <li><a href="#">公司简介</a></li>
+                    <li><a href="#">联系我们</a></li>
+                    <li><a href="#">加入我们</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>客户服务</h3>
+                <ul>
+                    <li><a href="#">帮助中心</a></li>
+                    <li><a href="#">售后服务</a></li>
+                    <li><a href="#">配送说明</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>商务合作</h3>
+                <ul>
+                    <li><a href="#">商家入驻</a></li>
+                    <li><a href="#">广告服务</a></li>
+                    <li><a href="#">合作伙伴</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>关注我们</h3>
+                <ul>
+                    <li><a href="#">微信公众号</a></li>
+                    <li><a href="#">新浪微博</a></li>
+                    <li><a href="#">抖音号</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 优购商城. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- 消息提示 -->
+    <div class="toast" id="toast"></div>
+
+    <script src="../js/data.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        let currentProduct = null;
+        let currentQuantity = 1;
+
+        // 页面加载
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = parseInt(urlParams.get('id'));
+            
+            if (!productId) {
+                window.location.href = '../index.html';
+                return;
+            }
+            
+            currentProduct = products.find(p => p.id === productId);
+            if (!currentProduct) {
+                window.location.href = '../index.html';
+                return;
+            }
+            
+            renderProductDetail();
+            renderSpecs();
+            renderReviews();
+            renderRelatedProducts();
+            updateUserLink();
+        });
+
+        // 渲染商品详情
+        function renderProductDetail() {
+            const discount = Math.round((1 - currentProduct.price / currentProduct.originalPrice) * 100);
+            
+            document.getElementById('productDetail').innerHTML = `
+                <div class="product-image-section">
+                    <img src="${currentProduct.image}" alt="${currentProduct.name}" class="product-main-image" id="mainImage">
+                    <div class="product-thumbnails">
+                        <img src="${currentProduct.image}" class="thumbnail active" onclick="changeImage(this)">
+                        <img src="${currentProduct.image}" class="thumbnail" onclick="changeImage(this)">
+                        <img src="${currentProduct.image}" class="thumbnail" onclick="changeImage(this)">
+                    </div>
+                </div>
+                <div class="product-info-section">
+                    <div class="product-detail-category">${currentProduct.category}</div>
+                    <h1 class="product-detail-name">${currentProduct.name}</h1>
+                    <div class="product-detail-rating">
+                        <span class="stars">${getStars(currentProduct.rating)}</span>
+                        <span class="rating-detail">${currentProduct.rating}分 | 已售${formatNumber(currentProduct.sales)}件</span>
+                    </div>
+                    <div class="product-detail-price">
+                        <span class="detail-current-price">${formatPrice(currentProduct.price)}</span>
+                        <span class="detail-original-price">${formatPrice(currentProduct.originalPrice)}</span>
+                        <span class="discount-badge">-${discount}%</span>
+                    </div>
+                    <p class="product-detail-description">${currentProduct.description}</p>
+                    <div class="product-meta">
+                        <div class="meta-item">
+                            <span class="meta-icon">🚚</span>
+                            <span>满99元包邮</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-icon">🔄</span>
+                            <span>7天无理由退换</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-icon">🛡️</span>
+                            <span>正品保证</span>
+                        </div>
+                    </div>
+                    <div class="quantity-selector">
+                        <span class="quantity-label">数量：</span>
+                        <div class="quantity-control">
+                            <button class="quantity-btn" onclick="updateQuantity(-1)">-</button>
+                            <input type="number" class="quantity-input" id="quantityInput" value="1" min="1" max="${currentProduct.stock}" readonly>
+                            <button class="quantity-btn" onclick="updateQuantity(1)">+</button>
+                        </div>
+                        <span class="stock-info">库存: ${currentProduct.stock}件</span>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn-add-cart" onclick="addToCartFromDetail()">
+                            🛒 加入购物车
+                        </button>
+                        <button class="btn-buy-now" onclick="buyNow()">
+                            ⚡ 立即购买
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('productDescription').innerHTML = `
+                <h3 style="margin-bottom: 20px; color: #333;">商品介绍</h3>
+                <p style="line-height: 2; color: #666; font-size: 15px;">
+                    ${currentProduct.description}<br><br>
+                    这款${currentProduct.name}是${currentProduct.category}类别的热销产品，
+                    拥有出色的性能和优质的用户体验。产品采用先进的技术和工艺制造，
+                    确保每一件商品都符合最高的品质标准。<br><br>
+                    我们提供完善的售后服务，包括7天无理由退换货、一年质保等，
+                    让您购物无忧。立即购买，享受品质生活！
+                </p>
+            `;
+        }
+
+        // 渲染规格参数
+        function renderSpecs() {
+            document.getElementById('specsTable').innerHTML = `
+                <tr>
+                    <td>商品名称</td>
+                    <td>${currentProduct.name}</td>
+                </tr>
+                <tr>
+                    <td>商品类别</td>
+                    <td>${currentProduct.category}</td>
+                </tr>
+                <tr>
+                    <td>商品编号</td>
+                    <td>SP${String(currentProduct.id).padStart(6, '0')}</td>
+                </tr>
+                <tr>
+                    <td>品牌</td>
+                    <td>官方正品</td>
+                </tr>
+                <tr>
+                    <td>库存</td>
+                    <td>${currentProduct.stock}件</td>
+                </tr>
+                <tr>
+                    <td>销量</td>
+                    <td>${formatNumber(currentProduct.sales)}件</td>
+                </tr>
+                <tr>
+                    <td>评分</td>
+                    <td>${currentProduct.rating}分</td>
+                </tr>
+            `;
+        }
+
+        // 渲染评价
+        function renderReviews() {
+            const mockReviews = [
+                { name: '张三', rating: 5, date: '2024-01-15', content: '商品质量很好，物流速度快，非常满意！' },
+                { name: '李四', rating: 5, date: '2024-01-14', content: '性价比很高，推荐购买。' },
+                { name: '王五', rating: 4, date: '2024-01-13', content: '整体不错，就是包装可以再改进一下。' },
+                { name: '赵六', rating: 5, date: '2024-01-12', content: '第二次购买了，品质一如既往的好！' }
+            ];
+            
+            document.getElementById('reviewsList').innerHTML = mockReviews.map(review => `
+                <div class="review-item">
+                    <div class="review-header">
+                        <div class="reviewer-info">
+                            <div class="reviewer-avatar">${review.name[0]}</div>
+                            <div>
+                                <div class="reviewer-name">${review.name}</div>
+                                <div class="review-date">${review.date}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="review-rating">${'★'.repeat(review.rating)}</div>
+                    <div class="review-content">${review.content}</div>
+                </div>
+            `).join('');
+        }
+
+        // 渲染相关商品
+        function renderRelatedProducts() {
+            const related = products
+                .filter(p => p.category === currentProduct.category && p.id !== currentProduct.id)
+                .slice(0, 4);
+            
+            if (related.length === 0) {
+                document.getElementById('relatedProducts').innerHTML = '<p style="color: #999;">暂无相关商品</p>';
+                return;
+            }
+            
+            document.getElementById('relatedProducts').innerHTML = related.map(product => `
+                <div class="product-card" onclick="viewProduct(${product.id})">
+                    <img src="${product.image}" alt="${product.name}" class="product-image">
+                    <div class="product-info">
+                        <div class="product-category">${product.category}</div>
+                        <h3 class="product-name">${product.name}</h3>
+                        <div class="product-price-row">
+                            <div class="product-price">
+                                <span class="current-price">${formatPrice(product.price)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 切换图片
+        function changeImage(thumbnail) {
+            document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
+            thumbnail.classList.add('active');
+            document.getElementById('mainImage').src = thumbnail.src;
+        }
+
+        // 更新数量
+        function updateQuantity(delta) {
+            const input = document.getElementById('quantityInput');
+            let newValue = parseInt(input.value) + delta;
+            newValue = Math.max(1, Math.min(newValue, currentProduct.stock));
+            input.value = newValue;
+            currentQuantity = newValue;
+        }
+
+        // 添加到购物车
+        function addToCartFromDetail() {
+            if (currentProduct.stock <= 0) {
+                showToast('商品库存不足', 'error');
+                return;
+            }
+            
+            addToCart(currentProduct.id, currentQuantity);
+            showToast(`已添加 ${currentQuantity} 件商品到购物车`, 'success');
+        }
+
+        // 立即购买
+        function buyNow() {
+            if (!checkLogin()) {
+                showToast('请先登录', 'error');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1500);
+                return;
+            }
+            
+            addToCart(currentProduct.id, currentQuantity);
+            window.location.href = 'cart.html';
+        }
+
+        // 切换标签页
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+
+        // 搜索
+        function searchFromDetail() {
+            const term = document.getElementById('searchInput').value;
+            if (term) {
+                window.location.href = `../index.html?search=${encodeURIComponent(term)}`;
+            }
+        }
+    </script>
+</body>
+</html>

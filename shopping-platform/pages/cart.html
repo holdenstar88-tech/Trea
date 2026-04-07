@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>购物车 - 优购商城</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/cart.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="../index.html" class="logo">
+                <span class="logo-icon">🛍️</span>
+                <span>优购商城</span>
+            </a>
+            
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索商品...">
+                <button onclick="searchAndGo()">🔍</button>
+            </div>
+            
+            <div class="nav-links">
+                <a href="../index.html">🏠 首页</a>
+                <a href="cart.html" class="cart-icon">
+                    🛒 购物车
+                    <span class="cart-count">0</span>
+                </a>
+                <a href="login.html" id="userLink">👤 登录</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 购物车内容 -->
+    <div class="cart-container">
+        <div class="cart-header">
+            <h1>🛒 我的购物车</h1>
+        </div>
+
+        <div class="cart-content" id="cartContent">
+            <!-- 购物车内容将通过JS动态生成 -->
+        </div>
+
+        <!-- 推荐商品 -->
+        <div class="recommend-section" id="recommendSection" style="display: none;">
+            <h3 class="recommend-title">💡 猜你喜欢</h3>
+            <div class="products-grid" id="recommendGrid">
+                <!-- 推荐商品 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>关于我们</h3>
+                <ul>
+                    <li><a href="#">公司简介</a></li>
+                    <li><a href="#">联系我们</a></li>
+                    <li><a href="#">加入我们</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>客户服务</h3>
+                <ul>
+                    <li><a href="#">帮助中心</a></li>
+                    <li><a href="#">售后服务</a></li>
+                    <li><a href="#">配送说明</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>商务合作</h3>
+                <ul>
+                    <li><a href="#">商家入驻</a></li>
+                    <li><a href="#">广告服务</a></li>
+                    <li><a href="#">合作伙伴</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>关注我们</h3>
+                <ul>
+                    <li><a href="#">微信公众号</a></li>
+                    <li><a href="#">新浪微博</a></li>
+                    <li><a href="#">抖音号</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 优购商城. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- 消息提示 -->
+    <div class="toast" id="toast"></div>
+
+    <script src="../js/data.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        let selectedItems = new Set();
+        let discount = 0;
+
+        // 页面加载
+        document.addEventListener('DOMContentLoaded', function() {
+            renderCart();
+            updateUserLink();
+        });
+
+        // 渲染购物车
+        function renderCart() {
+            const cartContent = document.getElementById('cartContent');
+            
+            if (cart.length === 0) {
+                cartContent.innerHTML = `
+                    <div class="empty-cart" style="grid-column: 1/-1;">
+                        <div class="empty-cart-icon">🛒</div>
+                        <h2>购物车是空的</h2>
+                        <p>快去挑选心仪的商品吧~</p>
+                        <a href="../index.html" class="btn-primary">去购物</a>
+                    </div>
+                `;
+                document.getElementById('recommendSection').style.display = 'block';
+                renderRecommendations();
+                return;
+            }
+
+            cartContent.innerHTML = `
+                <div class="cart-items">
+                    ${cart.map(item => `
+                        <div class="cart-item" data-id="${item.id}">
+                            <input type="checkbox" class="item-checkbox" 
+                                   ${selectedItems.has(item.id) ? 'checked' : ''}
+                                   onchange="toggleItem(${item.id})">
+                            <img src="${item.image}" alt="${item.name}" class="item-image">
+                            <div class="item-info">
+                                <div class="item-name">${item.name}</div>
+                                <div class="item-category">数码产品</div>
+                            </div>
+                            <div class="item-price">${formatPrice(item.price)}</div>
+                            <div class="item-quantity">
+                                <button class="qty-btn" onclick="updateItemQuantity(${item.id}, -1)">-</button>
+                                <input type="number" class="qty-input" value="${item.quantity}" readonly>
+                                <button class="qty-btn" onclick="updateItemQuantity(${item.id}, 1)">+</button>
+                            </div>
+                            <div class="item-subtotal">${formatPrice(item.price * item.quantity)}</div>
+                            <button class="item-remove" onclick="removeItem(${item.id})">🗑️</button>
+                        </div>
+                    `).join('')}
+                    
+                    <div class="cart-actions">
+                        <label class="select-all">
+                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                            <span>全选</span>
+                        </label>
+                        <button class="clear-cart" onclick="clearCartHandler()">清空购物车</button>
+                    </div>
+                </div>
+                
+                <div class="cart-sidebar">
+                    <div class="summary-card">
+                        <h3 class="summary-title">订单 summary</h3>
+                        <div class="summary-row">
+                            <span>商品总数</span>
+                            <span>${getSelectedCount()} 件</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>商品总额</span>
+                            <span>${formatPrice(getSelectedTotal())}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>运费</span>
+                            <span>${getSelectedTotal() >= 99 ? '免运费' : formatPrice(10)}</span>
+                        </div>
+                        ${discount > 0 ? `
+                            <div class="summary-row discount">
+                                <span>优惠折扣</span>
+                                <span>-${formatPrice(discount)}</span>
+                            </div>
+                        ` : ''}
+                        <div class="summary-divider"></div>
+                        <div class="summary-total">
+                            <span>合计：</span>
+                            <span class="total-price">${formatPrice(getFinalTotal())}</span>
+                        </div>
+                        <button class="checkout-btn" onclick="checkout()" ${selectedItems.size === 0 ? 'disabled' : ''}>
+                            去结算 (${selectedItems.size})
+                        </button>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <h3 class="summary-title">🎫 使用优惠券</h3>
+                        <div class="coupon-section">
+                            <div class="coupon-input">
+                                <input type="text" id="couponCode" placeholder="请输入优惠码">
+                                <button class="coupon-btn" onclick="applyCoupon()">使用</button>
+                            </div>
+                            <p style="font-size: 12px; color: #999; margin-top: 10px;">
+                                试试输入 "SAVE10" 享受优惠
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 更新全选状态
+            document.getElementById('selectAll').checked = selectedItems.size === cart.length && cart.length > 0;
+        }
+
+        // 切换商品选中状态
+        function toggleItem(itemId) {
+            if (selectedItems.has(itemId)) {
+                selectedItems.delete(itemId);
+            } else {
+                selectedItems.add(itemId);
+            }
+            renderCart();
+        }
+
+        // 全选/取消全选
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll').checked;
+            if (selectAll) {
+                cart.forEach(item => selectedItems.add(item.id));
+            } else {
+                selectedItems.clear();
+            }
+            renderCart();
+        }
+
+        // 更新商品数量
+        function updateItemQuantity(itemId, delta) {
+            const item = cart.find(i => i.id === itemId);
+            if (!item) return;
+            
+            const newQuantity = item.quantity + delta;
+            if (newQuantity < 1) {
+                if (confirm('确定要删除这个商品吗？')) {
+                    removeFromCart(itemId);
+                    selectedItems.delete(itemId);
+                }
+            } else {
+                updateCartQuantity(itemId, newQuantity);
+            }
+            renderCart();
+        }
+
+        // 删除商品
+        function removeItem(itemId) {
+            if (confirm('确定要删除这个商品吗？')) {
+                removeFromCart(itemId);
+                selectedItems.delete(itemId);
+                renderCart();
+                showToast('商品已删除', 'success');
+            }
+        }
+
+        // 清空购物车
+        function clearCartHandler() {
+            if (cart.length === 0) return;
+            
+            if (confirm('确定要清空购物车吗？')) {
+                clearCart();
+                selectedItems.clear();
+                renderCart();
+                showToast('购物车已清空', 'success');
+            }
+        }
+
+        // 获取选中商品数量
+        function getSelectedCount() {
+            return cart
+                .filter(item => selectedItems.has(item.id))
+                .reduce((sum, item) => sum + item.quantity, 0);
+        }
+
+        // 获取选中商品总额
+        function getSelectedTotal() {
+            return cart
+                .filter(item => selectedItems.has(item.id))
+                .reduce((sum, item) => sum + item.price * item.quantity, 0);
+        }
+
+        // 获取最终总价
+        function getFinalTotal() {
+            const subtotal = getSelectedTotal();
+            const shipping = subtotal >= 99 ? 0 : (subtotal > 0 ? 10 : 0);
+            return Math.max(0, subtotal + shipping - discount);
+        }
+
+        // 应用优惠券
+        function applyCoupon() {
+            const code = document.getElementById('couponCode').value.trim().toUpperCase();
+            
+            if (!code) {
+                showToast('请输入优惠码', 'error');
+                return;
+            }
+            
+            // 模拟优惠券验证
+            if (code === 'SAVE10') {
+                const subtotal = getSelectedTotal();
+                discount = Math.min(subtotal * 0.1, 100); // 最多优惠100元
+                showToast('优惠券使用成功！', 'success');
+            } else if (code === 'SAVE20') {
+                const subtotal = getSelectedTotal();
+                discount = Math.min(subtotal * 0.2, 200); // 最多优惠200元
+                showToast('优惠券使用成功！', 'success');
+            } else {
+                showToast('优惠码无效', 'error');
+                discount = 0;
+            }
+            
+            renderCart();
+        }
+
+        // 结算
+        function checkout() {
+            if (selectedItems.size === 0) {
+                showToast('请选择要购买的商品', 'error');
+                return;
+            }
+            
+            if (!checkLogin()) {
+                showToast('请先登录', 'error');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1500);
+                return;
+            }
+            
+            // 保存订单信息
+            const orderInfo = {
+                items: cart.filter(item => selectedItems.has(item.id)),
+                subtotal: getSelectedTotal(),
+                discount: discount,
+                shipping: getSelectedTotal() >= 99 ? 0 : 10,
+                total: getFinalTotal()
+            };
+            localStorage.setItem('currentOrder', JSON.stringify(orderInfo));
+            
+            // 跳转到结算页面
+            window.location.href = 'checkout.html';
+        }
+
+        // 渲染推荐商品
+        function renderRecommendations() {
+            const recommendGrid = document.getElementById('recommendGrid');
+            const recommendations = products.slice(0, 4);
+            
+            recommendGrid.innerHTML = recommendations.map(product => `
+                <div class="product-card" onclick="viewProduct(${product.id})">
+                    <img src="${product.image}" alt="${product.name}" class="product-image">
+                    <div class="product-info">
+                        <div class="product-category">${product.category}</div>
+                        <h3 class="product-name">${product.name}</h3>
+                        <div class="product-price-row">
+                            <div class="product-price">
+                                <span class="current-price">${formatPrice(product.price)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 搜索并跳转
+        function searchAndGo() {
+            const term = document.getElementById('searchInput').value;
+            if (term) {
+                window.location.href = `../index.html?search=${encodeURIComponent(term)}`;
+            }
+        }
+
+        // 查看商品
+        function viewProduct(productId) {
+            window.location.href = `product.html?id=${productId}`;
+        }
+    </script>
+</body>
+</html>
